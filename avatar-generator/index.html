@@ -181,22 +181,6 @@
             box-shadow: 0 0 0 3px var(--shadow-glow);
         }
 
-        .prompt-preview {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            word-break: break-word;
-        }
-
-        .prompt-preview .highlight {
-            color: var(--accent-primary);
-            font-weight: 600;
-        }
-
         .button {
             background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
             color: var(--bg-primary);
@@ -379,13 +363,6 @@
                         ></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label>Prompt Preview</label>
-                        <div class="prompt-preview" id="promptPreview">
-                            A minimalist flat line illustration of a <span class="highlight">___</span> centered inside a dark navy rounded square tile. The icon is rendered in a bright neon green thin-stroke line art style. The dark tile has a subtle vertical gradient and soft drop shadow. The entire composition is centered on a clean, light grey studio background. High-quality vector aesthetic, UI/UX dashboard icon style, symmetrical, clean lines, professional digital art.
-                        </div>
-                    </div>
-
                     <button type="submit" class="button" id="generateBtn">Generate Avatar</button>
                 </form>
             </div>
@@ -412,26 +389,10 @@
         const previewArea = document.getElementById('previewArea');
         const statusMessage = document.getElementById('statusMessage');
         const objectInput = document.getElementById('objectInput');
-        const promptPreview = document.getElementById('promptPreview');
-
         let currentImageUrl = null;
         let accessToken = null;
 
-        const PROMPT_TEMPLATE = 'A minimalist flat line illustration of a [OBJECT] centered inside a dark navy rounded square tile. The icon is rendered in a bright neon green thin-stroke line art style. The dark tile has a subtle vertical gradient and soft drop shadow. The entire composition is centered on a clean, light grey studio background. High-quality vector aesthetic, UI/UX dashboard icon style, symmetrical, clean lines, professional digital art.';
-
-        objectInput.addEventListener('input', () => {
-            const value = objectInput.value.trim() || '___';
-            promptPreview.innerHTML = PROMPT_TEMPLATE.replace(
-                '[OBJECT]',
-                `<span class="highlight">${escapeHtml(value)}</span>`
-            );
-        });
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        const PROMPT_TEMPLATE = 'A minimalist flat line illustration of a [OBJECT] centered inside a dark navy square tile. The icon is rendered in a bright neon green thin-stroke line art style. The dark tile has a subtle vertical gradient and soft drop shadow. High-quality vector aesthetic, UI/UX dashboard icon style, symmetrical, clean lines, professional digital art.';
 
         function initializeGoogleAuth() {
             google.accounts.oauth2.initTokenClient({
@@ -606,7 +567,7 @@
             previewArea.innerHTML = `
                 <img src="${imageUrl}" alt="Generated Avatar" class="preview-image" />
                 <button class="button download-btn" onclick="downloadAvatar()">
-                    Download 500×500 (PNG)
+                    Download 500×500 (JPG)
                 </button>`;
             previewArea.classList.add('has-image');
         }
@@ -627,7 +588,7 @@
                 const offsetX = (500 - drawWidth) / 2;
                 const offsetY = (500 - drawHeight) / 2;
 
-                ctx.fillStyle = '#e8e8e8';
+                ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, 500, 500);
                 ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
@@ -635,13 +596,13 @@
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = 'avatar-500x500.png';
+                    link.download = 'avatar-500x500.jpg';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
                     showStatus('Avatar downloaded!', 'success');
-                }, 'image/png');
+                }, 'image/jpeg', 0.95);
             };
             img.src = currentImageUrl;
         }
