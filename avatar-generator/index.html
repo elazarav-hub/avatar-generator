@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #151b2e;
+            --bg-card: #1a2235;
+            --accent-primary: #00ff94;
+            --accent-secondary: #00d4ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8b93a8;
+            --border-color: #2a3447;
+            --shadow-glow: rgba(0, 255, 148, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 148, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.06) 0%, transparent 50%);
+            animation: drift 20s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(3%, 3%) rotate(2deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            margin-bottom: 60px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .panel:hover::before {
+            opacity: 1;
+        }
+
+        .panel-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--shadow-glow);
+        }
+
+        .prompt-preview {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .prompt-preview .highlight {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-glow);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .preview-area {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-area.has-image {
+            border-style: solid;
+            border-color: var(--accent-primary);
+            background: var(--bg-primary);
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .preview-placeholder svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: imageAppear 0.5s ease-out;
+        }
+
+        @keyframes imageAppear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            width: auto;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .status-message.error {
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: #ff5252;
+        }
+
+        .status-message.success {
+            background: rgba(0, 255, 148, 0.1);
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        @media (max-width: 968px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+            .container {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Avatar Generator</h1>
+            <p class="subtitle">Line Illustration Icon Generator</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="panel">
+                <h2 class="panel-title">Configure Avatar</h2>
+
+                <div id="statusMessage"></div>
+
+                <form id="generatorForm">
+                    <div class="form-group">
+                        <label for="objectInput">Object Description</label>
+                        <textarea
+                            id="objectInput"
+                            placeholder="e.g. Electric Guitar, Coffee Cup, Rocket Ship..."
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prompt Preview</label>
+                        <div class="prompt-preview" id="promptPreview">
+                            A minimalist flat line illustration of a <span class="highlight">___</span> centered inside a dark navy rounded square tile. The icon is rendered in a bright neon green thin-stroke line art style. The dark tile has a subtle vertical gradient and soft drop shadow. The entire composition is centered on a clean, light grey studio background. High-quality vector aesthetic, UI/UX dashboard icon style, symmetrical, clean lines, professional digital art.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="button" id="generateBtn">Generate Avatar</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">Preview</h2>
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="4" />
+                            <circle cx="12" cy="10" r="3" />
+                            <path d="M7 21v-1a5 5 0 0 1 10 0v1" />
+                        </svg>
+                        <p>Your generated avatar will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('generatorForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const previewArea = document.getElementById('previewArea');
+        const statusMessage = document.getElementById('statusMessage');
+        const objectInput = document.getElementById('objectInput');
+        const promptPreview = document.getElementById('promptPreview');
+
+        let currentImageUrl = null;
+        let accessToken = null;
+
+        const PROMPT_TEMPLATE = 'A minimalist flat line illustration of a [OBJECT] centered inside a dark navy rounded square tile. The icon is rendered in a bright neon green thin-stroke line art style. The dark tile has a subtle vertical gradient and soft drop shadow. The entire composition is centered on a clean, light grey studio background. High-quality vector aesthetic, UI/UX dashboard icon style, symmetrical, clean lines, professional digital art.';
+
+        objectInput.addEventListener('input', () => {
+            const value = objectInput.value.trim() || '___';
+            promptPreview.innerHTML = PROMPT_TEMPLATE.replace(
+                '[OBJECT]',
+                `<span class="highlight">${escapeHtml(value)}</span>`
+            );
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function initializeGoogleAuth() {
+            google.accounts.oauth2.initTokenClient({
+                client_id: '734117932988-6fqj5318m794t88gd0kjtung98djckdj.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/cloud-platform',
+                callback: (response) => {
+                    if (response.access_token) {
+                        accessToken = response.access_token;
+                        showStatus('Authenticated with Google', 'success');
+                    } else {
+                        showStatus('Failed to authenticate with Google', 'error');
+                    }
+                },
+            });
+        }
+
+        window.onload = function () {
+            if (typeof google !== 'undefined' && google.accounts) {
+                initializeGoogleAuth();
+            } else {
+                setTimeout(() => {
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        initializeGoogleAuth();
+                    }
+                }, 1000);
+            }
+        };
+
+        function getAccessToken() {
+            return new Promise((resolve, reject) => {
+                if (accessToken) {
+                    resolve(accessToken);
+                } else {
+                    const tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: '734117932988-6fqj5318m794t88gd0kjtung98djckdj.apps.googleusercontent.com',
+                        scope: 'https://www.googleapis.com/auth/cloud-platform',
+                        callback: (response) => {
+                            if (response.access_token) {
+                                accessToken = response.access_token;
+                                resolve(accessToken);
+                            } else {
+                                reject(new Error('Failed to obtain access token'));
+                            }
+                        },
+                    });
+                    tokenClient.requestAccessToken();
+                }
+            });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const objectDesc = objectInput.value.trim();
+            if (!objectDesc) {
+                showStatus('Please enter an object description', 'error');
+                return;
+            }
+
+            const prompt = PROMPT_TEMPLATE.replace('[OBJECT]', objectDesc);
+
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            showLoading();
+            clearStatus();
+
+            try {
+                showStatus('Authenticating...', 'success');
+                const token = await getAccessToken();
+
+                const projectId = 'gen-lang-client-0623650983';
+                const location = 'us-central1';
+                const apiUrl = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate-002:predict`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        instances: [{ prompt }],
+                        parameters: {
+                            sampleCount: 1,
+                            aspectRatio: '1:1',
+                        },
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    let errorMsg = 'API Error: ';
+                    if (errorData.error?.message) {
+                        errorMsg += errorData.error.message;
+                    } else {
+                        errorMsg += `${response.status} ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                const predictions = data.predictions;
+
+                if (!predictions || predictions.length === 0) {
+                    throw new Error('No predictions in response');
+                }
+
+                const prediction = predictions[0];
+                const imageData =
+                    prediction.bytesBase64Encoded ||
+                    prediction.image ||
+                    (typeof prediction === 'string' ? prediction : null);
+
+                if (imageData) {
+                    const imageUrl = imageData.startsWith('data:')
+                        ? imageData
+                        : `data:image/png;base64,${imageData}`;
+                    displayImage(imageUrl);
+                    showStatus('Image generated successfully!', 'success');
+                } else {
+                    throw new Error('No image data found in prediction');
+                }
+            } catch (error) {
+                let errorMsg = '';
+                if (error.message.includes('Failed to obtain access token')) {
+                    errorMsg = 'Authentication failed — please allow authentication when prompted.';
+                } else if (error.message.includes('404') || error.message.includes('not found')) {
+                    errorMsg = '404: Imagen model not available. Ensure Vertex AI API is enabled.';
+                } else if (error.message.includes('403') || error.message.includes('permission')) {
+                    errorMsg = '403: Permission denied. Enable Vertex AI API and ensure billing is active.';
+                } else if (error.message.includes('400')) {
+                    errorMsg = '400 Bad Request: ' + error.message;
+                } else if (error.message.includes('quota')) {
+                    errorMsg = 'Quota exceeded: API usage limit reached.';
+                } else if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
+                    errorMsg = 'Network error — check your internet connection.';
+                } else {
+                    errorMsg = error.message || 'Unknown error occurred';
+                }
+                showStatus(errorMsg, 'error');
+                showPlaceholder();
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Avatar';
+            }
+        });
+
+        function showLoading() {
+            previewArea.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Generating your avatar...</p>
+                </div>`;
+            previewArea.classList.remove('has-image');
+        }
+
+        function showPlaceholder() {
+            previewArea.innerHTML = `
+                <div class="preview-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="4" />
+                        <circle cx="12" cy="10" r="3" />
+                        <path d="M7 21v-1a5 5 0 0 1 10 0v1" />
+                    </svg>
+                    <p>Your generated avatar will appear here</p>
+                </div>`;
+            previewArea.classList.remove('has-image');
+        }
+
+        function displayImage(imageUrl) {
+            currentImageUrl = imageUrl;
+            previewArea.innerHTML = `
+                <img src="${imageUrl}" alt="Generated Avatar" class="preview-image" />
+                <button class="button download-btn" onclick="downloadAvatar()">
+                    Download 500×500 (PNG)
+                </button>`;
+            previewArea.classList.add('has-image');
+        }
+
+        function downloadAvatar() {
+            if (!currentImageUrl) return;
+
+            const img = new Image();
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = 500;
+                canvas.height = 500;
+                const ctx = canvas.getContext('2d');
+
+                const scale = Math.max(500 / img.width, 500 / img.height);
+                const drawWidth = img.width * scale;
+                const drawHeight = img.height * scale;
+                const offsetX = (500 - drawWidth) / 2;
+                const offsetY = (500 - drawHeight) / 2;
+
+                ctx.fillStyle = '#e8e8e8';
+                ctx.fillRect(0, 0, 500, 500);
+                ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+                canvas.toBlob(function (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'avatar-500x500.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    showStatus('Avatar downloaded!', 'success');
+                }, 'image/png');
+            };
+            img.src = currentImageUrl;
+        }
+
+        function showStatus(message, type) {
+            statusMessage.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            setTimeout(clearStatus, 5000);
+        }
+
+        function clearStatus() {
+            statusMessage.innerHTML = '';
+        }
+    </script>
+</body>
+</html>
